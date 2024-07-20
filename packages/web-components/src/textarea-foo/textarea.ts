@@ -564,11 +564,12 @@ export class TextArea extends FASTElement {
   private appendUserContentEl() {
     this.setInitialValue();
 
+    // TODO: Change to use a whitespace character instead.
     this.userContentEl = document.createElement('pre');
+    this.userContentEl.textContent = this.initialValue;
+
     this.innerHTML = '';
     this.append(this.userContentEl);
-
-    this.userContentEl.textContent = this.initialValue;
   }
 
   private setContentEditable(edtiable: boolean) {

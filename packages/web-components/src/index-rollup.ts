@@ -32,6 +32,8 @@ import './tab-panel/define.js';
 import './tab/define.js';
 import './tabs/define.js';
 import './textarea/define.js';
+import './textarea-foo/define.js';
+import './textarea-bar/define.js';
 import './text-input/define.js';
 import './text/define.js';
 import './toggle-button/define.js';

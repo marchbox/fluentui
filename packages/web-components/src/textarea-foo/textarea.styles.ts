@@ -76,7 +76,7 @@ export const styles: ElementStyles = css`
     --block-size: var(--min-block-size);
     --inline-size: 18rem;
     --border-width: ${strokeWidthThin};
-    --textbox-padding-inline: ${spacingHorizontalXXS};
+    --content-padding-inline: ${spacingHorizontalXXS};
 
     /* colors */
     --color: ${colorNeutralForeground1};
@@ -136,7 +136,7 @@ export const styles: ElementStyles = css`
     --min-block-size: 40px;
     --padding-block: ${spacingVerticalXS};
     --padding-inline: ${spacingHorizontalSNudge};
-    --textbox-padding-inline: ${spacingHorizontalXXS};
+    --content-padding-inline: ${spacingHorizontalXXS};
   }
 
   :host(${largeState}) {
@@ -145,7 +145,7 @@ export const styles: ElementStyles = css`
     --min-block-size: 64px;
     --padding-block: ${spacingVerticalS};
     --padding-inline: ${spacingHorizontalM};
-    --textbox-padding-inline: ${spacingHorizontalSNudge};
+    --content-padding-inline: ${spacingHorizontalSNudge};
   }
 
   :host(${resizeBothState}:not(:disabled)) {
@@ -229,26 +229,38 @@ export const styles: ElementStyles = css`
     content: none;
   }
 
-  ::selection {
-    color: ${colorNeutralForegroundInverted};
-    background-color: ${colorNeutralBackgroundInverted};
-  }
-
-  .textbox,
+  .content,
   .placeholder {
     box-sizing: border-box;
     grid-column: 1 / -1;
     grid-row: 1 / -1;
-    padding-inline: var(--textbox-padding-inline);
-    overflow-wrap: break-word; /* Needed for Firefox */
+    padding-inline: var(--content-padding-inline);
   }
 
-  .textbox {
+  .content {
     overflow: auto;
     outline: 0;
   }
 
   .placeholder {
     color: var(--placeholder-color);
+  }
+
+  .placeholder,
+  ::slotted(pre) {
+    overflow-wrap: break-word; /* Needed for Firefox */
+    white-space: pre-wrap;
+  }
+
+  ::slotted(pre) {
+    font: inherit;
+    margin: 0;
+    min-block-size: 100%;
+  }
+
+  /* FIXME: find a way to style selection */
+  ::selection {
+    color: ${colorNeutralForegroundInverted};
+    background-color: ${colorNeutralBackgroundInverted};
   }
 `;

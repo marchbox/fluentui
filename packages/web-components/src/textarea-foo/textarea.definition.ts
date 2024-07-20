@@ -14,7 +14,4 @@ export const definition = TextArea.compose({
   name: `${FluentDesignSystem.prefix}-textarea-foo`,
   template,
   styles,
-  shadowOptions: {
-    delegatesFocus: true,
-  },
 });

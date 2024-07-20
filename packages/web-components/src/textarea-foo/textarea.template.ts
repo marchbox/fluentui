@@ -8,16 +8,14 @@ import type { TextArea } from './textarea.js';
  */
 export function textInputTemplate<T extends TextArea>(): ElementViewTemplate<T> {
   return html<T>`
-    <template>
+    <template
+      tabindex="0"
+      @focus="${x => x.handleFocus()}"
+      @blur="${x => x.handleBlur()}"
+      @input="${x => x.handleInput()}"
+    >
       <div class="placeholder" part="placeholder" aria-hidden="true">${x => x.placeholder}</div>
-      <div
-        ${ref('textbox')}
-        class="textbox"
-        part="textbox"
-        spellcheck="${x => (x.spellcheck ? 'true' : 'false')}"
-        @focus="${x => x.handleTextboxFocus()}"
-        @blur="${x => x.handleTextboxBlur()}"
-      ></div>
+      <div class="content" part="content"><slot></slot></div>
     </template>
   `;
 }

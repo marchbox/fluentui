@@ -25,7 +25,8 @@ const storyTemplate = html<StoryArgs<FluentTextArea>>`
     spellcheck="${x => x.spellcheck}"
     resize="${x => x.resize}"
     value="${x => x.value}"
-  >${x => x.content ?? ''}</fluent-textarea-foo>
+    >${x => x.content ?? ''}</fluent-textarea-foo
+  >
 `;
 
 export default {

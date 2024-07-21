@@ -70,13 +70,15 @@ export const styles: ElementStyles = css`
     --line-height: ${lineHeightBase300};
 
     /* layout */
-    --padding-inline: ${spacingHorizontalMNudge};
+    --padding-inline-container: ${spacingHorizontalMNudge};
+    --padding-inline-content: ${spacingHorizontalXXS};
+    --padding-inline: calc(var(--padding-inline-container) + var(--padding-inline-content));
     --padding-block: ${spacingVerticalSNudge};
     --min-block-size: 52px;
     --block-size: var(--min-block-size);
     --inline-size: 18rem;
     --border-width: ${strokeWidthThin};
-    --textbox-padding-inline: ${spacingHorizontalXXS};
+    --focus-indicator-block-size: max(2px, ${borderRadiusMedium});
 
     /* colors */
     --color: ${colorNeutralForeground1};
@@ -88,6 +90,7 @@ export const styles: ElementStyles = css`
     /* elevations */
     --box-shadow: none;
 
+    /* others */
     --contain-size: size;
 
     background-color: var(--background-color);
@@ -101,14 +104,17 @@ export const styles: ElementStyles = css`
     font-family: ${fontFamilyBase};
     font-size: var(--font-size);
     font-weight: ${fontWeightRegular};
-    grid-template: 1fr / 1fr;
+    grid-template-rows: 1fr var(--focus-indicator-block-size);
+    align-items: start;
     line-height: var(--line-height);
     inline-size: var(--inline-size);
     min-block-size: var(--min-block-size);
     block-size: var(--block-size);
-    overflow: hidden;
+    overflow: auto;
+    overflow-wrap: break-word; /* Needed for Firefox */
     padding: var(--padding-block) var(--padding-inline);
     position: relative;
+    white-space: pre-wrap;
   }
 
   :host(:hover) {
@@ -135,8 +141,8 @@ export const styles: ElementStyles = css`
     --line-height: ${lineHeightBase200};
     --min-block-size: 40px;
     --padding-block: ${spacingVerticalXS};
-    --padding-inline: ${spacingHorizontalSNudge};
-    --textbox-padding-inline: ${spacingHorizontalXXS};
+    --padding-inline-container: ${spacingHorizontalSNudge};
+    --padding-inline-content: ${spacingHorizontalXXS};
   }
 
   :host(${largeState}) {
@@ -144,8 +150,8 @@ export const styles: ElementStyles = css`
     --line-height: ${lineHeightBase400};
     --min-block-size: 64px;
     --padding-block: ${spacingVerticalS};
-    --padding-inline: ${spacingHorizontalM};
-    --textbox-padding-inline: ${spacingHorizontalSNudge};
+    --padding-inline-container: ${spacingHorizontalM};
+    --padding-inline-content: ${spacingHorizontalSNudge};
   }
 
   :host(${resizeBothState}:not(:disabled)) {
@@ -202,24 +208,38 @@ export const styles: ElementStyles = css`
     user-select: none;
   }
 
+  /* Placeholder */
+  :host(:empty)::before {
+    content: attr(placeholder);
+    color: var(--placeholder-color);
+    inset: 0;
+    padding: var(--padding-block) var(--padding-inline);
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* Focus indicator */
   :host::after {
+    block-size: var(--focus-indicator-block-size);
     border-bottom: 2px solid ${colorCompoundBrandStroke};
     border-radius: 0 0 ${borderRadiusMedium} ${borderRadiusMedium};
     box-sizing: border-box;
     clip-path: inset(calc(100% - 2px) 1px 0px);
     content: '';
-    height: max(2px, ${borderRadiusMedium});
-    inset: auto -1px 0;
-    position: absolute;
-    transform: scaleX(0);
+    grid-column: 1 / -1;
+    grid-row: 2 / -1;
+    inset-block-end: 0;
+    margin-inline: calc((var(--padding-inline) + 1px) * -1);
+    position: sticky;
+    transform: scaleX(0) translateY(var(--padding-block));
     transition-delay: ${curveAccelerateMid};
     transition-duration: ${durationUltraFast};
     transition-property: transform;
+    z-index: 2;
   }
 
-  :host(:focus-within)::after {
-    transform: scaleX(1);
-    transition-property: transform;
+  :host(:focus)::after {
+    transform: scaleX(1) translateY(var(--padding-block));
     transition-duration: ${durationNormal};
     transition-delay: ${curveDecelerateMid};
   }
@@ -229,26 +249,9 @@ export const styles: ElementStyles = css`
     content: none;
   }
 
+  /* FIXME: find a way to style selection */
   ::selection {
     color: ${colorNeutralForegroundInverted};
     background-color: ${colorNeutralBackgroundInverted};
-  }
-
-  .textbox,
-  .placeholder {
-    box-sizing: border-box;
-    grid-column: 1 / -1;
-    grid-row: 1 / -1;
-    padding-inline: var(--textbox-padding-inline);
-    overflow-wrap: break-word; /* Needed for Firefox */
-  }
-
-  .textbox {
-    overflow: auto;
-    outline: 0;
-  }
-
-  .placeholder {
-    color: var(--placeholder-color);
   }
 `;

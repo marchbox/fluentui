@@ -1,4 +1,4 @@
-import { attr, FASTElement, nullableNumberConverter, Observable, observable } from '@microsoft/fast-element';
+import { attr, FASTElement, nullableNumberConverter, Observable } from '@microsoft/fast-element';
 import { toggleState } from '../utils/element-internals.js';
 import {
   TextAreaAppearance,
@@ -9,11 +9,19 @@ import {
   TextAreaSize,
 } from './textarea.options.js';
 
+const ZERO_WIDTH_SPACE = '\u200B';
+
+declare global {
+  interface ShadowRoot {
+    getSelection: () => Selection;
+  }
+}
+
 /**
  * A Text Area Custom HTML Element.
  * Based largely on the {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea | `<textarea>`} element.
  *
- * @csspart textbox - The element contains the user input content.
+ * @csspart content - The element contains the user input content.
  * @csspart placehoder - The placeholder text container.
  * @fires input - Fires when user types in content.
  * @fires change - Fires after the control loses focus, if the content has changed.
@@ -31,19 +39,17 @@ export class TextArea extends FASTElement {
   static readonly formAssociated = true;
 
   /**
-   * The textbox element.
-   * @internal
-   */
-  public textbox!: HTMLDivElement;
-
-  /**
    * The internal {@link https://developer.mozilla.org/docs/Web/API/ElementInternals | `ElementInternals`} instance for the component.
    *
    * @internal
    */
   public elementInternals: ElementInternals = this.attachInternals();
 
-  private handleTextboxInputListener?: EventListener;
+  /**
+   * The initial value, which is the HTML code that an author added as
+   * descendants inside the textarea element.
+   */
+  private initialValue!: string;
 
   /**
    * Indicates the visual appearance of the element.
@@ -289,12 +295,6 @@ export class TextArea extends FASTElement {
   }
 
   /**
-   * @internal
-   */
-  @observable
-  public sizeStyles = '';
-
-  /**
    * Controls whether or not to enable spell checking for the input field, or if the default spell checking configuration should be used.
    * @see The {@link https://developer.mozilla.org/docs/Web/HTML/Global_attributes/spellcheck | `spellcheck`} attribute
    *
@@ -358,14 +358,14 @@ export class TextArea extends FASTElement {
    * Reflects the `value` property.
    */
   public get value(): string {
-    return this.textbox.textContent?.trim() ?? '';
+    return this.textContent ?? '';
   }
 
   public set value(next: string) {
     if (this.disabled || this.readOnly) {
       return;
     }
-    this.textbox.textContent = next.trim();
+    this.textContent = next;
     this.setFormValue(next);
     this.setValidity();
   }
@@ -404,8 +404,8 @@ export class TextArea extends FASTElement {
   public connectedCallback(): void {
     super.connectedCallback();
 
-    this.setContentEditable(!this.disabled && !this.readOnly);
     this.setInitialValue();
+    this.setContentEditable(!this.disabled && !this.readOnly);
     this.togglePlaceholderShownState();
     this.setValidity();
     this.maybeDisplayShadow();
@@ -425,8 +425,6 @@ export class TextArea extends FASTElement {
   public disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    this.unbindEvents();
-
     Observable.getNotifier(this).unsubscribe(this, 'appearance');
     Observable.getNotifier(this).unsubscribe(this, 'displayShadow');
     Observable.getNotifier(this).unsubscribe(this, 'required');
@@ -440,7 +438,7 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public formResetCallback(): void {
-    this.setInitialValue();
+    this.value = this.initialValue;
   }
 
   /**
@@ -507,7 +505,7 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public setValidity(flags: Partial<ValidityState> = {}, message?: string, anchor?: HTMLElement): void {
-    if (this.$fastController.isConnected) {
+    if (!this.$fastController.isConnected) {
       return;
     }
 
@@ -548,7 +546,7 @@ export class TextArea extends FASTElement {
         ...flags,
       },
       message ?? defaultMessage,
-      anchor ?? this.textbox,
+      anchor,
     );
   }
 
@@ -564,19 +562,25 @@ export class TextArea extends FASTElement {
 
   private selectContent() {
     const selection = document.getSelection();
-    selection?.selectAllChildren(this.textbox);
+    selection?.selectAllChildren(this);
     this.$emit('select');
+  }
+
+  private setInitialValue() {
+    this.initialValue = this.innerHTML.trim();
+    this.textContent = this.initialValue;
+    this.setFormValue(this.initialValue);
   }
 
   private setContentEditable(edtiable: boolean) {
     if (!edtiable) {
-      this.textbox.contentEditable = 'false';
+      this.contentEditable = 'false';
     } else {
       try {
-        this.textbox.contentEditable = 'plaintext-only';
+        this.contentEditable = 'plaintext-only';
       } catch {
         // Firefox does’t support `plaintext-only` yet.
-        this.textbox.contentEditable = 'true';
+        this.contentEditable = 'true';
       }
     }
   }
@@ -589,32 +593,26 @@ export class TextArea extends FASTElement {
     }
   }
 
-  private setInitialValue() {
-    // Don't set `this.value` directly here since it won't set if the element
-    // is read-only or disabled.
-    // TODO: double check security
-    const value = this.innerHTML.trim();
-    this.textbox.textContent = value;
-    this.setFormValue(value);
-  }
-
   private bindEvents() {
-    this.handleTextboxInputListener = this.handleTextboxInput.bind(this);
-    this.textbox.addEventListener('input', this.handleTextboxInputListener, { passive: true });
-    this.textbox.addEventListener('input', () => (this.userInteracted = true), { once: true });
-  }
-
-  private unbindEvents() {
-    if (this.handleTextboxInputListener) {
-      this.textbox.removeEventListener('input', this.handleTextboxInputListener);
-    }
+    this.addEventListener('input', () => (this.userInteracted = true), { once: true });
   }
 
   private togglePlaceholderShownState() {
     toggleState(this.elementInternals, 'placeholder-shown', !!this.placeholder && !this.value);
   }
 
-  private handleTextboxInput() {
+  /**
+   * @internal
+   */
+  public handleInput() {
+    if (this.value.length === 2 && this.value[0] === ZERO_WIDTH_SPACE) {
+      this.value = this.value.replace(ZERO_WIDTH_SPACE, '');
+      const selection = this.shadowRoot!.getSelection();
+      selection.modify('move', 'forward', 'character');
+    }
+    if (this.value === '') {
+      this.value = ZERO_WIDTH_SPACE;
+    }
     this.togglePlaceholderShownState();
     this.setFormValue(this.value);
   }
@@ -622,14 +620,21 @@ export class TextArea extends FASTElement {
   /**
    * @internal
    */
-  public handleTextboxFocus() {
+  public handleFocus() {
     this.valueBeforeFocus = this.value;
+    if (this.value === '') {
+      this.value = ZERO_WIDTH_SPACE;
+    }
   }
 
   /**
    * @internal
    */
-  public handleTextboxBlur() {
+  public handleBlur() {
+    if (this.value === ZERO_WIDTH_SPACE) {
+      this.value = '';
+    }
+
     this.setValidity();
 
     if (this.valueBeforeFocus !== this.value) {

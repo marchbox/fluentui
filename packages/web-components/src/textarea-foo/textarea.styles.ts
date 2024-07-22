@@ -244,6 +244,8 @@ export const styles: ElementStyles = css`
 
   .placeholder {
     color: var(--placeholder-color);
+    pointer-events: none;
+    user-select: none;
   }
 
   .placeholder,

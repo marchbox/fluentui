@@ -348,14 +348,14 @@ export class TextArea extends FASTElement {
    * Reflects the `value` property.
    */
   public get value(): string {
-    return this.userContentEl.textContent?.trim() ?? '';
+    return this.userContentEl.innerText ?? '';
   }
 
   public set value(next: string) {
     if (this.disabled || this.readOnly) {
       return;
     }
-    this.userContentEl.textContent = next.trim();
+    this.userContentEl.textContent = next;
     this.setFormValue(next);
     this.setValidity();
   }
@@ -574,8 +574,8 @@ export class TextArea extends FASTElement {
   private appendUserContentEl() {
     this.setInitialValue();
 
-    // TODO: Change to use a whitespace character instead.
     this.userContentEl = document.createElement('pre');
+    this.userContentEl.role = 'presentation';
     this.userContentEl.textContent = this.initialValue;
 
     this.innerHTML = '';

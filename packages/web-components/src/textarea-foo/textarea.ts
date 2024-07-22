@@ -1,5 +1,6 @@
-import { attr, FASTElement, nullableNumberConverter, Observable, observable } from '@microsoft/fast-element';
+import { attr, FASTElement, nullableNumberConverter, Observable } from '@microsoft/fast-element';
 import { toggleState } from '../utils/element-internals.js';
+import { colorNeutralBackgroundInverted, colorNeutralForegroundInverted } from '../theme/design-tokens.js';
 import {
   TextAreaAppearance,
   TextAreaAppearancesForDisplayShadow,
@@ -8,6 +9,18 @@ import {
   TextAreaResize,
   TextAreaSize,
 } from './textarea.options.js';
+
+// TODO: Find a better location to add this style sheet.
+const selectionStyleSheet = new CSSStyleSheet();
+if ('adoptedStyleSheets' in document && !document.adoptedStyleSheets.includes(selectionStyleSheet)) {
+  selectionStyleSheet.replaceSync(`
+    fluent-textarea-foo ::selection {
+      color: ${colorNeutralForegroundInverted};
+      background-color: ${colorNeutralBackgroundInverted};
+    }
+  `);
+  document.adoptedStyleSheets.push(selectionStyleSheet);
+}
 
 /**
  * A Text Area Custom HTML Element.

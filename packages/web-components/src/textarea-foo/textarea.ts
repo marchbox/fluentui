@@ -52,8 +52,6 @@ export class TextArea extends FASTElement {
 
   private userContentEl!: HTMLPreElement;
 
-  private initialValue!: string;
-
   /**
    * Indicates the visual appearance of the element.
    *
@@ -110,6 +108,27 @@ export class TextArea extends FASTElement {
   public block: boolean = false;
   protected blockChanged() {
     toggleState(this.elementInternals, `block`, this.block);
+  }
+
+  private _defaultValue = '';
+
+  /**
+   * The text content of the element before user interaction.
+   * @see The {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLTextAreaElement#defaultvalue | `defaultValue`} property
+   *
+   * @public
+   * @remarks
+   */
+  get defaultValue(): string {
+    return this._defaultValue;
+  }
+
+  set defaultValue(next: string) {
+    if (this.userInteracted) {
+      return;
+    }
+    this._defaultValue = next;
+    this.value = next;
   }
 
   /**
@@ -441,7 +460,7 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public formResetCallback(): void {
-    this.value = this.initialValue;
+    this.value = this.defaultValue;
   }
 
   /**
@@ -579,17 +598,17 @@ export class TextArea extends FASTElement {
     this.addEventListener('input', () => (this.userInteracted = true), { once: true });
   }
 
-  private setInitialValue() {
-    this.initialValue = this.innerHTML.trim();
-    this.setFormValue(this.initialValue);
+  private setDefaultValue() {
+    this._defaultValue = this.innerHTML.trim();
+    this.setFormValue(this.defaultValue);
   }
 
   private appendUserContentEl() {
-    this.setInitialValue();
+    this.setDefaultValue();
 
     this.userContentEl = document.createElement('pre');
     this.userContentEl.role = 'presentation';
-    this.userContentEl.textContent = this.initialValue;
+    this.userContentEl.textContent = this.defaultValue;
 
     this.innerHTML = '';
     this.append(this.userContentEl);

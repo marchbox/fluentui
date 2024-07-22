@@ -1,4 +1,4 @@
-import { ElementViewTemplate, html, ref } from '@microsoft/fast-element';
+import { ElementViewTemplate, html } from '@microsoft/fast-element';
 import type { TextArea } from './textarea.js';
 
 /**
@@ -13,6 +13,7 @@ export function textInputTemplate<T extends TextArea>(): ElementViewTemplate<T> 
       @focus="${x => x.handleFocus()}"
       @blur="${x => x.handleBlur()}"
       @input="${x => x.handleInput()}"
+      @click="${x => x.handleClick()}"
     >
       <div class="placeholder" part="placeholder" aria-hidden="true">${x => x.placeholder}</div>
       <div class="content" part="content"><slot></slot></div>

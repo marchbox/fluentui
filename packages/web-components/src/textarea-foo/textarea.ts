@@ -548,12 +548,22 @@ export class TextArea extends FASTElement {
   public select() {
     this.focus();
     this.selectContent();
+    this.$emit('select');
   }
 
   private selectContent() {
     const selection = document.getSelection();
     selection?.selectAllChildren(this.userContentEl);
-    this.$emit('select');
+  }
+
+  private selectContentAndEdit() {
+    this.selectContent();
+    const selection = document.getSelection();
+    selection?.collapseToEnd();
+  }
+
+  private bindEvents() {
+    this.addEventListener('input', () => (this.userInteracted = true), { once: true });
   }
 
   private setInitialValue() {
@@ -593,10 +603,6 @@ export class TextArea extends FASTElement {
     }
   }
 
-  private bindEvents() {
-    this.addEventListener('input', () => (this.userInteracted = true), { once: true });
-  }
-
   private togglePlaceholderShownState() {
     toggleState(this.elementInternals, 'placeholder-shown', !!this.placeholder && !this.value);
   }
@@ -614,7 +620,7 @@ export class TextArea extends FASTElement {
    */
   public handleFocus() {
     this.valueBeforeFocus = this.value;
-    // FIXME: Set the selection inside the userContentEl.
+    this.selectContentAndEdit();
   }
 
   /**
@@ -627,6 +633,17 @@ export class TextArea extends FASTElement {
       this.$emit('change');
     }
     this.valueBeforeFocus = '';
+  }
+
+  /**
+   * @internal
+   */
+  public handleClick() {
+    if (document.getSelection()?.anchorNode === this.userContentEl) {
+      return;
+    }
+
+    this.selectContentAndEdit();
   }
 
   private maybeDisplayShadow() {

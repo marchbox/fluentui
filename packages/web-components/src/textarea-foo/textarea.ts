@@ -671,7 +671,13 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public handleClick() {
-    if (document.getSelection()?.anchorNode === this.userContentEl) {
+    // Setting the focus into `this.userContentEl`. This is needed in Chromium, when a user clicks inside
+    // the textarea but outside of `this.userContentEl`, due to the padding on textarea.
+    const anchorNode = document.getSelection()?.anchorNode;
+    if (
+      anchorNode === this.userContentEl ||
+      anchorNode?.parentNode === this.userContentEl
+    ) {
       return;
     }
 

@@ -52,6 +52,8 @@ export class TextArea extends FASTElement {
 
   private userContentEl!: HTMLPreElement;
 
+  private lightDomObserver?: MutationObserver;
+
   /**
    * Indicates the visual appearance of the element.
    *
@@ -433,6 +435,7 @@ export class TextArea extends FASTElement {
     this.maybeDisplayShadow();
 
     this.bindEvents();
+    this.observeLightDom();
 
     Observable.getNotifier(this).subscribe(this, 'appearance');
     Observable.getNotifier(this).subscribe(this, 'displayShadow');
@@ -446,6 +449,8 @@ export class TextArea extends FASTElement {
    */
   public disconnectedCallback(): void {
     super.disconnectedCallback();
+
+    this.unobserveLightDom();
 
     Observable.getNotifier(this).unsubscribe(this, 'appearance');
     Observable.getNotifier(this).unsubscribe(this, 'displayShadow');
@@ -594,6 +599,23 @@ export class TextArea extends FASTElement {
 
   private bindEvents() {
     this.addEventListener('input', () => (this.userInteracted = true), { once: true });
+  }
+
+  private observeLightDom() {
+    this.lightDomObserver = new MutationObserver(() => {
+      if (!this.contains(this.userContentEl)) {
+        this.innerHTML = '';
+        this.append(this.userContentEl);
+        this.selectContent(true);
+      }
+    });
+    this.lightDomObserver.observe(this, {
+      childList: true,
+    });
+  }
+
+  private unobserveLightDom() {
+    this.lightDomObserver?.disconnect();
   }
 
   private setDefaultValue() {

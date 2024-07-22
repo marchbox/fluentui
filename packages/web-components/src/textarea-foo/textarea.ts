@@ -583,15 +583,13 @@ export class TextArea extends FASTElement {
     this.$emit('select');
   }
 
-  private selectContent() {
+  private selectContent(collapse = false) {
     const selection = document.getSelection();
     selection?.selectAllChildren(this.userContentEl);
-  }
 
-  private selectContentAndEdit() {
-    this.selectContent();
-    const selection = document.getSelection();
-    selection?.collapseToEnd();
+    if (collapse) {
+      selection?.collapseToEnd();
+    }
   }
 
   private bindEvents() {
@@ -636,7 +634,8 @@ export class TextArea extends FASTElement {
   }
 
   private togglePlaceholderShownState() {
-    toggleState(this.elementInternals, 'placeholder-shown', !!this.placeholder && !this.value);
+    const isValueEmpty = this.value === '' || this.value === '\n';
+    toggleState(this.elementInternals, 'placeholder-shown', !!this.placeholder && isValueEmpty);
   }
 
   /**
@@ -652,7 +651,7 @@ export class TextArea extends FASTElement {
    */
   public handleFocus() {
     this.valueBeforeFocus = this.value;
-    this.selectContentAndEdit();
+    this.selectContent(true);
   }
 
   /**
@@ -681,7 +680,7 @@ export class TextArea extends FASTElement {
       return;
     }
 
-    this.selectContentAndEdit();
+    this.selectContent(true);
   }
 
   private maybeDisplayShadow() {

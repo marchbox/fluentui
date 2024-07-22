@@ -603,7 +603,7 @@ export class TextArea extends FASTElement {
 
   private observeLightDom() {
     this.lightDomObserver = new MutationObserver(() => {
-      if (!this.contains(this.userContentEl)) {
+      if (this.childNodes.length !== 1 || this.childNodes[0] !== this.userContentEl) {
         this.innerHTML = '';
         this.append(this.userContentEl);
         this.selectContent(true);

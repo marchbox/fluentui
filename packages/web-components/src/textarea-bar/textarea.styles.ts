@@ -110,8 +110,8 @@ export const styles: ElementStyles = css`
     inline-size: var(--inline-size);
     min-block-size: var(--min-block-size);
     block-size: var(--block-size);
-    overflow: auto;
-    overflow-wrap: break-word; /* Needed for Firefox */
+    overflow: hidden auto;
+    word-break: break-word;
     padding: var(--padding-block) var(--padding-inline);
     position: relative;
     white-space: pre-wrap;

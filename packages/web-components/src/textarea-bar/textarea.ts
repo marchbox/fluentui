@@ -11,12 +11,6 @@ import {
 
 const ZERO_WIDTH_SPACE = '\u200B';
 
-declare global {
-  interface ShadowRoot {
-    getSelection: () => Selection;
-  }
-}
-
 /**
  * A Text Area Custom HTML Element.
  * Based largely on the {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea | `<textarea>`} element.
@@ -605,14 +599,18 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public handleInput() {
-    if (this.value.length === 2 && this.value[0] === ZERO_WIDTH_SPACE) {
+    if (this.value.length > 1 && this.value[0] === ZERO_WIDTH_SPACE) {
       this.value = this.value.replace(ZERO_WIDTH_SPACE, '');
-      const selection = this.shadowRoot!.getSelection();
-      selection.modify('move', 'forward', 'character');
+
+      // Safari doesn’t support ShadowRoot.getSelection() yet.
+      const selection = document.getSelection();
+      selection?.modify('move', 'forward', 'character');
     }
+
     if (this.value === '') {
       this.value = ZERO_WIDTH_SPACE;
     }
+
     this.togglePlaceholderShownState();
     this.setFormValue(this.value);
   }
@@ -622,6 +620,7 @@ export class TextArea extends FASTElement {
    */
   public handleFocus() {
     this.valueBeforeFocus = this.value;
+
     if (this.value === '') {
       this.value = ZERO_WIDTH_SPACE;
     }

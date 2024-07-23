@@ -1,5 +1,6 @@
 import { attr, FASTElement, nullableNumberConverter, Observable } from '@microsoft/fast-element';
 import { toggleState } from '../utils/element-internals.js';
+import { colorNeutralBackgroundInverted, colorNeutralForegroundInverted } from '../theme/design-tokens.js';
 import {
   TextAreaAppearance,
   TextAreaAppearancesForDisplayShadow,
@@ -10,6 +11,18 @@ import {
 } from './textarea.options.js';
 
 const ZERO_WIDTH_SPACE = '\u200B';
+
+// TODO: Find a better location to add this style sheet.
+const selectionStyleSheet = new CSSStyleSheet();
+if ('adoptedStyleSheets' in document && !document.adoptedStyleSheets.includes(selectionStyleSheet)) {
+  selectionStyleSheet.replaceSync(`
+    fluent-textarea-bar ::selection {
+      color: ${colorNeutralForegroundInverted};
+      background-color: ${colorNeutralBackgroundInverted};
+    }
+  `);
+  document.adoptedStyleSheets.push(selectionStyleSheet);
+}
 
 /**
  * A Text Area Custom HTML Element.
@@ -38,12 +51,6 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public elementInternals: ElementInternals = this.attachInternals();
-
-  /**
-   * The initial value, which is the HTML code that an author added as
-   * descendants inside the textarea element.
-   */
-  private initialValue!: string;
 
   /**
    * Indicates the visual appearance of the element.
@@ -344,6 +351,30 @@ export class TextArea extends FASTElement {
     return this.elementInternals.willValidate;
   }
 
+  private _defaultValue = '';
+
+  /**
+   * The text content of the element before user interaction.
+   * @see The {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLTextAreaElement#defaultvalue | `defaultValue`} property
+   *
+   * @public
+   * @remarks
+   * In order to set the initial/default value, an author should either add the default value in the HTML as the children
+   * of the component, or setting this property in JavaScript. Setting `innerHTML`, `innerText`, or `textContent` on this
+   * component will not change the default value or the content displayed inside the component.
+   */
+  public get defaultValue(): string {
+    return this._defaultValue ?? '';
+  }
+
+  public set defaultValue(next: string) {
+    if (this.userInteracted || this.disabled) {
+      return;
+    }
+    this._defaultValue = next;
+    this.value = next;
+  }
+
   /**
    * The value of the element.
    *
@@ -352,7 +383,7 @@ export class TextArea extends FASTElement {
    * Reflects the `value` property.
    */
   public get value(): string {
-    return this.textContent ?? '';
+    return this.$fastController.isConnected ? this.userContentEl.innerText ?? '' : this.defaultValue;
   }
 
   public set value(next: string) {
@@ -398,7 +429,7 @@ export class TextArea extends FASTElement {
   public connectedCallback(): void {
     super.connectedCallback();
 
-    this.setInitialValue();
+    this.setDefaultValue();
     this.setContentEditable(!this.disabled && !this.readOnly);
     this.togglePlaceholderShownState();
     this.setValidity();
@@ -432,7 +463,7 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public formResetCallback(): void {
-    this.value = this.initialValue;
+    this.value = this.defaultValue;
   }
 
   /**
@@ -552,18 +583,28 @@ export class TextArea extends FASTElement {
   public select() {
     this.focus();
     this.selectContent();
-  }
-
-  private selectContent() {
-    const selection = document.getSelection();
-    selection?.selectAllChildren(this);
     this.$emit('select');
   }
 
-  private setInitialValue() {
-    this.initialValue = this.innerHTML.trim();
-    this.textContent = this.initialValue;
-    this.setFormValue(this.initialValue);
+  private selectContent(collapse = false) {
+    const selection = document.getSelection();
+    selection?.selectAllChildren(this);
+
+    if (selection && collapse) {
+      selection.collapseToEnd();
+    }
+  }
+
+  private setDefaultValue() {
+    if (!this.defaultValue) {
+      this._defaultValue = this.innerHTML.trim();
+    }
+    this.setFormValue(this.defaultValue);
+
+    this.append(
+      document.createTextNode(ZERO_WIDTH_SPACE),
+      document.createElement('br')
+    );
   }
 
   private setContentEditable(edtiable: boolean) {
@@ -599,17 +640,15 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public handleInput() {
-    if (this.value.length > 1 && this.value[0] === ZERO_WIDTH_SPACE) {
-      this.value = this.value.replace(ZERO_WIDTH_SPACE, '');
+    // if (this.value.length > 1 && this.value[0] === ZERO_WIDTH_SPACE) {
+    //   this.value = this.value.replace(ZERO_WIDTH_SPACE, '');
 
-      // Safari doesn’t support ShadowRoot.getSelection() yet.
-      const selection = document.getSelection();
-      selection?.modify('move', 'forward', 'character');
-    }
+    //   this.selectContent(true);
+    // }
 
-    if (this.value === '') {
-      this.value = ZERO_WIDTH_SPACE;
-    }
+    // if (this.value === '') {
+    //   this.value = ZERO_WIDTH_SPACE;
+    // }
 
     this.togglePlaceholderShownState();
     this.setFormValue(this.value);
@@ -624,6 +663,8 @@ export class TextArea extends FASTElement {
     if (this.value === '') {
       this.value = ZERO_WIDTH_SPACE;
     }
+
+    this.selectContent(true);
   }
 
   /**

@@ -126,7 +126,7 @@ export class TextArea extends FASTElement {
   }
 
   set defaultValue(next: string) {
-    if (this.userInteracted) {
+    if (this.userInteracted || this.disabled) {
       return;
     }
     this._defaultValue = next;
@@ -386,7 +386,7 @@ export class TextArea extends FASTElement {
   }
 
   public set value(next: string) {
-    if (this.disabled || this.readOnly) {
+    if (this.disabled) {
       return;
     }
     this.userContentEl.textContent = next;

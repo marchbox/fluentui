@@ -112,27 +112,6 @@ export class TextArea extends FASTElement {
     toggleState(this.elementInternals, `block`, this.block);
   }
 
-  private _defaultValue = '';
-
-  /**
-   * The text content of the element before user interaction.
-   * @see The {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLTextAreaElement#defaultvalue | `defaultValue`} property
-   *
-   * @public
-   * @remarks
-   */
-  get defaultValue(): string {
-    return this._defaultValue;
-  }
-
-  set defaultValue(next: string) {
-    if (this.userInteracted || this.disabled) {
-      return;
-    }
-    this._defaultValue = next;
-    this.value = next;
-  }
-
   /**
    * Sets the name of the value directionality to be submitted with form data.
    * @see The {@link https://developer.mozilla.org/docs/Web/HTML/Attributes/dirname | `dirname`} attribute
@@ -374,6 +353,30 @@ export class TextArea extends FASTElement {
     return this.elementInternals.willValidate;
   }
 
+  private _defaultValue = '';
+
+  /**
+   * The text content of the element before user interaction.
+   * @see The {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLTextAreaElement#defaultvalue | `defaultValue`} property
+   *
+   * @public
+   * @remarks
+   * In order to set the initial/default value, an author should either add the default value in the HTML as the children
+   * of the component, or setting this property in JavaScript. Setting `innerHTML`, `innerText`, or `textContent` on this
+   * component will not change the default value or the content displayed inside the component.
+   */
+  public get defaultValue(): string {
+    return this._defaultValue ?? '';
+  }
+
+  public set defaultValue(next: string) {
+    if (this.userInteracted || this.disabled) {
+      return;
+    }
+    this._defaultValue = next;
+    this.value = next;
+  }
+
   /**
    * The value of the element.
    *
@@ -382,13 +385,14 @@ export class TextArea extends FASTElement {
    * Reflects the `value` property.
    */
   public get value(): string {
-    return this.userContentEl.innerText ?? '';
+    return this.$fastController.isConnected ? this.userContentEl.innerText ?? '' : this.defaultValue;
   }
 
   public set value(next: string) {
-    if (this.disabled) {
+    if (this.disabled || !this.$fastController.isConnected) {
       return;
     }
+
     this.userContentEl.textContent = next;
     this.setFormValue(next);
     this.setValidity();
@@ -619,7 +623,9 @@ export class TextArea extends FASTElement {
   }
 
   private setDefaultValue() {
-    this._defaultValue = this.innerHTML.trim();
+    if (!this.defaultValue) {
+      this._defaultValue = this.innerHTML.trim();
+    }
     this.setFormValue(this.defaultValue);
   }
 
@@ -695,10 +701,7 @@ export class TextArea extends FASTElement {
     // Setting the focus into `this.userContentEl`. This is needed in Chromium, when a user clicks inside
     // the textarea but outside of `this.userContentEl`, due to the padding on textarea.
     const anchorNode = document.getSelection()?.anchorNode;
-    if (
-      anchorNode === this.userContentEl ||
-      anchorNode?.parentNode === this.userContentEl
-    ) {
+    if (anchorNode === this.userContentEl || anchorNode?.parentNode === this.userContentEl) {
       return;
     }
 

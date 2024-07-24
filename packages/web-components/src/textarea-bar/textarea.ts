@@ -10,6 +10,12 @@ import {
   TextAreaSize,
 } from './textarea.options.js';
 
+declare global {
+  interface Selection {
+    direction: 'backward' | 'forward' | 'none';
+  }
+}
+
 const ZERO_WIDTH_SPACE = '\u200B';
 
 // TODO: Find a better location to add this style sheet.
@@ -633,6 +639,14 @@ export class TextArea extends FASTElement {
     toggleState(this.elementInternals, 'placeholder-shown', !!this.placeholder && !this.value);
   }
 
+  private maybeDisplayShadow() {
+    toggleState(
+      this.elementInternals,
+      'display-shadow',
+      this.displayShadow && TextAreaAppearancesForDisplayShadow.includes(this.appearance),
+    );
+  }
+
   /**
    * @internal
    */
@@ -680,11 +694,30 @@ export class TextArea extends FASTElement {
     this.valueBeforeFocus = '';
   }
 
-  private maybeDisplayShadow() {
-    toggleState(
-      this.elementInternals,
-      'display-shadow',
-      this.displayShadow && TextAreaAppearancesForDisplayShadow.includes(this.appearance),
-    );
+  /**
+   * FIXME: This is buggy. Try select all text then paste.
+   * @internal
+   */
+  public handlePaste(evt: ClipboardEvent) {
+    if (this.contentEditable === 'true') {
+      const pastingContent = evt.clipboardData!.getData('text/plain') as string;
+      const selection = document.getSelection()!;
+      const {direction, anchorNode, anchorOffset, focusNode, focusOffset} = selection;
+      const newValue = direction === 'backward' ?
+          [
+            focusNode!.textContent!.slice(0, focusOffset),
+            pastingContent,
+            anchorNode!.textContent!.slice(anchorOffset),
+          ].join('') :
+          [
+            anchorNode!.textContent!.slice(0, anchorOffset),
+            pastingContent,
+            focusNode!.textContent!.slice(focusOffset),
+          ].join('');
+      this.value = newValue;
+      const newAnchorOffset =
+        (direction === 'backward' ? focusOffset : anchorOffset) + pastingContent.length - 1;
+      selection.collapse(this.childNodes[0], newAnchorOffset);
+    }
   }
 }

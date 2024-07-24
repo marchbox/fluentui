@@ -696,28 +696,34 @@ export class TextArea extends FASTElement {
 
   /**
    * FIXME: This is buggy. Try select all text then paste.
+   * TODO: Remove this event handler once Firefox broadly supports
+   *     `contenteditable=plaintext-only`.
    * @internal
    */
   public handlePaste(evt: ClipboardEvent) {
-    if (this.contentEditable === 'true') {
-      const pastingContent = evt.clipboardData!.getData('text/plain') as string;
-      const selection = document.getSelection()!;
-      const {direction, anchorNode, anchorOffset, focusNode, focusOffset} = selection;
-      const newValue = direction === 'backward' ?
-          [
-            focusNode!.textContent!.slice(0, focusOffset),
-            pastingContent,
-            anchorNode!.textContent!.slice(anchorOffset),
-          ].join('') :
-          [
-            anchorNode!.textContent!.slice(0, anchorOffset),
-            pastingContent,
-            focusNode!.textContent!.slice(focusOffset),
-          ].join('');
-      this.value = newValue;
-      const newAnchorOffset =
-        (direction === 'backward' ? focusOffset : anchorOffset) + pastingContent.length - 1;
-      selection.collapse(this.childNodes[0], newAnchorOffset);
+    if (this.contentEditable !== 'true') {
+      return true;
     }
+
+    // Convert copied content to plain text for Firefox because it doesn’t
+    // support `contenteditable=plaintext-only`.
+    const pastingContent = evt.clipboardData!.getData('text/plain') as string;
+    const selection = document.getSelection()!;
+    const {direction, anchorNode, anchorOffset, focusNode, focusOffset} = selection;
+    const newValue = direction === 'backward' ?
+        [
+          focusNode!.textContent!.slice(0, focusOffset),
+          pastingContent,
+          anchorNode!.textContent!.slice(anchorOffset),
+        ].join('') :
+        [
+          anchorNode!.textContent!.slice(0, anchorOffset),
+          pastingContent,
+          focusNode!.textContent!.slice(focusOffset),
+        ].join('');
+    this.value = newValue;
+    const newAnchorOffset =
+      (direction === 'backward' ? focusOffset : anchorOffset) + pastingContent.length - 1;
+    selection.collapse(this.childNodes[0], newAnchorOffset);
   }
 }

@@ -383,7 +383,7 @@ export class TextArea extends FASTElement {
    * Reflects the `value` property.
    */
   public get value(): string {
-    return this.innerText;
+    return this.textContent?.replace(new RegExp(`^${ZERO_WIDTH_SPACE}`), '') ?? '';
   }
 
   public set value(next: string) {
@@ -600,10 +600,8 @@ export class TextArea extends FASTElement {
       this.defaultValue = this.innerHTML.trim();
     }
 
-    this.append(
-      document.createTextNode(ZERO_WIDTH_SPACE),
-      document.createElement('br')
-    );
+    // TODO: document why we need to insert these 2 nodes.
+    this.append(document.createTextNode(ZERO_WIDTH_SPACE), document.createElement('br'));
   }
 
   private setContentEditable(edtiable: boolean) {
@@ -659,9 +657,9 @@ export class TextArea extends FASTElement {
   public handleFocus() {
     this.valueBeforeFocus = this.value;
 
-    if (this.value === '') {
-      this.value = ZERO_WIDTH_SPACE;
-    }
+    // if (this.value === '') {
+    //   this.value = ZERO_WIDTH_SPACE;
+    // }
 
     this.selectContent(true);
   }
@@ -670,9 +668,9 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public handleBlur() {
-    if (this.value === ZERO_WIDTH_SPACE) {
-      this.value = '';
-    }
+    // if (this.value === ZERO_WIDTH_SPACE) {
+    //   this.value = '';
+    // }
 
     this.setValidity();
 

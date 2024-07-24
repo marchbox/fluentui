@@ -383,14 +383,14 @@ export class TextArea extends FASTElement {
    * Reflects the `value` property.
    */
   public get value(): string {
-    return this.$fastController.isConnected ? this.userContentEl.innerText ?? '' : this.defaultValue;
+    return this.innerText;
   }
 
   public set value(next: string) {
     if (this.disabled || this.readOnly) {
       return;
     }
-    this.textContent = next;
+    this.innerText = next;
     this.setFormValue(next);
     this.setValidity();
   }
@@ -597,9 +597,8 @@ export class TextArea extends FASTElement {
 
   private setDefaultValue() {
     if (!this.defaultValue) {
-      this._defaultValue = this.innerHTML.trim();
+      this.defaultValue = this.innerHTML.trim();
     }
-    this.setFormValue(this.defaultValue);
 
     this.append(
       document.createTextNode(ZERO_WIDTH_SPACE),

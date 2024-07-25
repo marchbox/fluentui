@@ -396,6 +396,7 @@ export class TextArea extends FASTElement {
     if (this.disabled || this.readOnly) {
       return;
     }
+
     this.innerText = next;
     this.setFormValue(next);
     this.setValidity();
@@ -661,6 +662,9 @@ export class TextArea extends FASTElement {
     //   this.value = ZERO_WIDTH_SPACE;
     // }
 
+    // TODO: Normalize the text node with a timeout, to fix the issue in Edge
+    // that you cannot select text across multiple lines.
+
     this.togglePlaceholderShownState();
     this.setFormValue(this.value);
   }
@@ -695,9 +699,9 @@ export class TextArea extends FASTElement {
   }
 
   /**
-   * FIXME: This is buggy. Try select all text then paste.
    * TODO: Remove this event handler once Firefox broadly supports
    *     `contenteditable=plaintext-only`.
+   *     https://bugzilla.mozilla.org/show_bug.cgi?id=1291467
    * @internal
    */
   public handlePaste(evt: ClipboardEvent) {
@@ -709,21 +713,40 @@ export class TextArea extends FASTElement {
     // support `contenteditable=plaintext-only`.
     const pastingContent = evt.clipboardData!.getData('text/plain') as string;
     const selection = document.getSelection()!;
-    const {direction, anchorNode, anchorOffset, focusNode, focusOffset} = selection;
-    const newValue = direction === 'backward' ?
-        [
-          focusNode!.textContent!.slice(0, focusOffset),
-          pastingContent,
-          anchorNode!.textContent!.slice(anchorOffset),
-        ].join('') :
-        [
-          anchorNode!.textContent!.slice(0, anchorOffset),
-          pastingContent,
-          focusNode!.textContent!.slice(focusOffset),
-        ].join('');
+    const { anchorOffset, focusOffset } = selection;
+    const startPoint = Math.min(anchorOffset, focusOffset);
+    const endPoint = Math.max(anchorOffset, focusOffset);
+
+    this.normalize();
+
+    const contentBeforePasting = this.innerText.slice(0, startPoint);
+    const contentAfterPasting = this.innerText.slice(endPoint);
+    const newValue = [contentBeforePasting, pastingContent, contentAfterPasting].join('');
     this.value = newValue;
-    const newAnchorOffset =
-      (direction === 'backward' ? focusOffset : anchorOffset) + pastingContent.length - 1;
-    selection.collapse(this.childNodes[0], newAnchorOffset);
+
+    // Remove any potential HTML elements inside the edtiable area. Mostly
+    // `<br>`s, as Firefox converts `\n` in the pasting text to `<br>`s.
+    // (But user typed `\n`s will remain as they are)
+    this.childNodes.forEach(node => {
+      let replacedText = '';
+      switch (node.nodeType) {
+        case Node.TEXT_NODE:
+          return;
+        case Node.ELEMENT_NODE:
+          replacedText = node.nodeName === 'BR' ? '\n' : node.textContent ?? '';
+          node.replaceWith(document.createTextNode(replacedText));
+          break;
+        default:
+          node.remove();
+      }
+    });
+
+    // Collapse everything into one text node.
+    this.normalize();
+
+    selection.removeAllRanges();
+    const range = document.createRange();
+    range.setStart(this.childNodes[0], startPoint + pastingContent.length);
+    selection.addRange(range);
   }
 }

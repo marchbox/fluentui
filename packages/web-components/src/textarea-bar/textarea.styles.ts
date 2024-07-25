@@ -111,6 +111,7 @@ export const styles: ElementStyles = css`
     min-block-size: var(--min-block-size);
     block-size: var(--block-size);
     overflow: hidden auto;
+    overscroll-behavior: none; /* avoid focus indicator from moved when over scrolled */
     word-break: break-word;
     padding: var(--padding-block) var(--padding-inline);
     position: relative;

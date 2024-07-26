@@ -132,6 +132,10 @@ export default {
 } as Meta<FluentTextArea>;
 
 export const TextArea: Story<FluentTextArea> = renderComponent(storyTemplate).bind({});
+TextArea.args = {
+  autoResize: true,
+  resize: 'both',
+};
 
 export const Placeholder: Story<FluentTextArea> = renderComponent(html<StoryArgs<FluentTextArea>>` ${storyTemplate} `);
 Placeholder.args = {

@@ -1,6 +1,5 @@
 import { attr, FASTElement, nullableNumberConverter, Observable } from '@microsoft/fast-element';
 import { toggleState } from '../utils/element-internals.js';
-import { colorNeutralBackgroundInverted, colorNeutralForegroundInverted } from '../theme/design-tokens.js';
 import {
   TextAreaAppearance,
   TextAreaAppearancesForDisplayShadow,
@@ -588,9 +587,6 @@ export class TextArea extends FASTElement {
     if (!this.defaultValue) {
       this.defaultValue = this.innerHTML.trim();
     }
-
-    // TODO: document why we need to insert these 2 nodes.
-    this.append(document.createTextNode(ZERO_WIDTH_SPACE), document.createElement('br'));
   }
 
   private setContentEditable(edtiable: boolean) {
@@ -634,15 +630,11 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public handleInput() {
-    // if (this.value.length > 1 && this.value[0] === ZERO_WIDTH_SPACE) {
-    //   this.value = this.value.replace(ZERO_WIDTH_SPACE, '');
-
-    //   this.selectContent(true);
-    // }
-
-    // if (this.value === '') {
-    //   this.value = ZERO_WIDTH_SPACE;
-    // }
+    if (this.textContent === '') {
+      this.prepend(document.createTextNode(ZERO_WIDTH_SPACE));
+      this.normalize();
+      this.selectContent(true);
+    }
 
     // TODO: Normalize the text node with a timeout, to fix the issue in Edge
     // that you cannot select text across multiple lines.
@@ -659,9 +651,20 @@ export class TextArea extends FASTElement {
   public handleFocus() {
     this.valueBeforeFocus = this.value;
 
-    // if (this.value === '') {
-    //   this.value = ZERO_WIDTH_SPACE;
-    // }
+    // For WebKit:
+    // https://bugs.webkit.org/show_bug.cgi?id=276926
+    if (this.lastChild?.nodeName !== 'BR') {
+      this.append(document.createElement('br'));
+    }
+
+    // For Chromium: 
+    // 1. By adding the `<br>` for WebKit, without any text node, the editable
+    //     host becomes uneditable.
+    // 2. When the `textContent` is empty, the caret becomes full height of the
+    //     host element.
+    if (this.textContent === '') {
+      this.prepend(document.createTextNode(ZERO_WIDTH_SPACE));
+    }
 
     this.selectContent(true);
   }
@@ -670,10 +673,7 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public handleBlur() {
-    // if (this.value === ZERO_WIDTH_SPACE) {
-    //   this.value = '';
-    // }
-
+    this.normalize();
     this.setValidity();
 
     if (this.valueBeforeFocus !== this.value) {
@@ -709,7 +709,7 @@ export class TextArea extends FASTElement {
     this.value = newValue;
 
     // Remove any potential HTML elements inside the edtiable area. Mostly
-    // `<br>`s, as Firefox converts `\n` in the pasting text to `<br>`s.
+    // `<br>`s, because Firefox converts `\n` in the pasting text to `<br>`s.
     // (But user typed `\n`s will remain as they are)
     this.childNodes.forEach(node => {
       let replacedText = '';

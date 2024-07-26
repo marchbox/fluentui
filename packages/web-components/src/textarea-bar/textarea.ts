@@ -371,7 +371,7 @@ export class TextArea extends FASTElement {
    * Reflects the `value` property.
    */
   public get value(): string {
-    return this.textContent?.replace(new RegExp(`^${ZERO_WIDTH_SPACE}`), '') ?? '';
+    return this.innerText?.replace(new RegExp(`^${ZERO_WIDTH_SPACE}`), '') ?? '';
   }
 
   public set value(next: string) {
@@ -647,7 +647,7 @@ export class TextArea extends FASTElement {
     // TODO: Normalize the text node with a timeout, to fix the issue in Edge
     // that you cannot select text across multiple lines.
     // this.normalize();
-    // this.textContent = this.textContent?.replace(/(\\n)+$/, '\n') ?? '';
+    // this.innerText = this.innerText?.replace(/(\\n)+$/, '\n') ?? '';
 
     this.togglePlaceholderShownState();
     this.setFormValue(this.value);
@@ -717,7 +717,7 @@ export class TextArea extends FASTElement {
         case Node.TEXT_NODE:
           return;
         case Node.ELEMENT_NODE:
-          replacedText = node.nodeName === 'BR' ? '\n' : node.textContent ?? '';
+          replacedText = node.nodeName === 'BR' ? '\n' : (node as HTMLElement).innerText ?? '';
           node.replaceWith(document.createTextNode(replacedText));
           break;
         default:
@@ -730,7 +730,8 @@ export class TextArea extends FASTElement {
 
     selection.removeAllRanges();
     const range = document.createRange();
-    range.setStart(this.childNodes[0], startPoint + pastingContent.length);
+    const newStartPoint = Math.min(this.value.length, startPoint + pastingContent.length);
+    range.setStart(this.childNodes[0], newStartPoint);
     selection.addRange(range);
   }
 }

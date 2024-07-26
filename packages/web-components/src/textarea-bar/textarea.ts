@@ -10,25 +10,7 @@ import {
   TextAreaSize,
 } from './textarea.options.js';
 
-declare global {
-  interface Selection {
-    direction: 'backward' | 'forward' | 'none';
-  }
-}
-
 const ZERO_WIDTH_SPACE = '\u200B';
-
-// TODO: Find a better location to add this style sheet.
-const selectionStyleSheet = new CSSStyleSheet();
-if ('adoptedStyleSheets' in document && !document.adoptedStyleSheets.includes(selectionStyleSheet)) {
-  selectionStyleSheet.replaceSync(`
-    fluent-textarea-bar ::selection {
-      color: ${colorNeutralForegroundInverted};
-      background-color: ${colorNeutralBackgroundInverted};
-    }
-  `);
-  document.adoptedStyleSheets.push(selectionStyleSheet);
-}
 
 /**
  * A Text Area Custom HTML Element.
@@ -664,6 +646,8 @@ export class TextArea extends FASTElement {
 
     // TODO: Normalize the text node with a timeout, to fix the issue in Edge
     // that you cannot select text across multiple lines.
+    // this.normalize();
+    // this.textContent = this.textContent?.replace(/(\\n)+$/, '\n') ?? '';
 
     this.togglePlaceholderShownState();
     this.setFormValue(this.value);

@@ -250,8 +250,7 @@ export const styles: ElementStyles = css`
     content: none;
   }
 
-  /* FIXME: find a way to style selection */
-  ::selection {
+  :host::selection {
     color: ${colorNeutralForegroundInverted};
     background-color: ${colorNeutralBackgroundInverted};
   }

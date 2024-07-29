@@ -231,12 +231,6 @@ export class TextArea extends FASTElement {
    */
   @attr
   public placeholder?: string;
-  protected placeholderChanged() {
-    this.elementInternals.ariaPlaceholder = `${this.placeholder ?? ''}`;
-    if (this.$fastController.isConnected) {
-      this.togglePlaceholderShownState();
-    }
-  }
 
   /**
    * When true, the control will be immutable by user interaction.
@@ -263,9 +257,6 @@ export class TextArea extends FASTElement {
   public required!: boolean;
   protected requiredChanged() {
     this.elementInternals.ariaRequired = `${!!this.required}`;
-    if (this.$fastController.isConnected) {
-      this.setValidity();
-    }
   }
 
   /**
@@ -402,13 +393,6 @@ export class TextArea extends FASTElement {
     this.setValidity();
   }
 
-  private valueBeforeFocus = '';
-
-  /**
-   * Whether the user has interacted with the element.
-   */
-  private userInteracted = false;
-
   public handleChange(_: any, propertyName: string) {
     switch (propertyName) {
       case 'appearance':
@@ -437,11 +421,8 @@ export class TextArea extends FASTElement {
     super.connectedCallback();
 
     this.setDefaultValue();
-    this.togglePlaceholderShownState();
     this.setValidity();
     this.maybeDisplayShadow();
-
-    this.bindEvents();
 
     Observable.getNotifier(this).subscribe(this, 'appearance');
     Observable.getNotifier(this).subscribe(this, 'displayShadow');
@@ -496,7 +477,6 @@ export class TextArea extends FASTElement {
    * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/checkValidity | `HTMLInputElement.checkValidity()`} method.
    */
   public checkValidity(): boolean {
-    this.userInteracted = true;
     return this.elementInternals.checkValidity();
   }
 
@@ -508,7 +488,6 @@ export class TextArea extends FASTElement {
    * Reflects the {@link https://developer.mozilla.org/docs/Web/API/ElementInternals/reportValidity | `HTMLInputElement.reportValidity()`} method.
    */
   public reportValidity(): boolean {
-    this.userInteracted = true;
     return this.elementInternals.reportValidity();
   }
 
@@ -518,8 +497,7 @@ export class TextArea extends FASTElement {
    *
    * @public
    */
-  public setCustomValidity(message: string | undefined): void {
-    this.userInteracted = true;
+  public setCustomValidity(message: string | null): void {
     this.elementInternals.setValidity({ customError: !!message }, !!message ? message.toString() : undefined);
     this.reportValidity();
   }
@@ -534,21 +512,19 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public setValidity(flags: Partial<ValidityState> = {}, message?: string, anchor?: HTMLElement): void {
-    if (this.$fastController.isConnected) {
+    if (!this.$fastController.isConnected) {
       return;
     }
 
-    if (this.disabled || !this.userInteracted) {
+    if (this.disabled) {
       this.elementInternals.setValidity({});
       return;
     }
+
     this.elementInternals.setValidity(
-      {
-        ...this.controlEl.validity,
-        ...flags,
-      },
+      Object.assign(this.controlEl.validity, flags),
       message ?? this.controlEl.validationMessage,
-      anchor ?? this,
+      anchor ?? this.controlEl,
     );
   }
 
@@ -559,46 +535,16 @@ export class TextArea extends FASTElement {
    */
   public select() {
     this.controlEl.select();
-    // this.$emit('select');
-  }
-
-  private bindEvents() {
-    this.controlEl.addEventListener('input', () => (this.userInteracted = true), { once: true });
   }
 
   private setDefaultValue() {
     this.defaultValue = this.innerHTML.trim();
     this.setFormValue(this.defaultValue);
+    this.setValidity();
   }
 
   private setDisabledSideEffect(disabled: boolean) {
     this.elementInternals.ariaDisabled = `${disabled}`;
-  }
-
-  private togglePlaceholderShownState() {
-    toggleState(this.elementInternals, 'placeholder-shown', !!this.placeholder && this.value === '');
-  }
-
-  /**
-   * @internal
-   */
-  public handleInput() {
-    this.togglePlaceholderShownState();
-    this.setFormValue(this.value);
-  }
-
-  /**
-   * @internal
-   */
-  public handleChangeEvent() {
-    this.$emit('change');
-  }
-
-  /**
-   * @internal
-   */
-  public handleSelect() {
-    this.$emit('select');
   }
 
   private maybeDisplayShadow() {
@@ -607,5 +553,28 @@ export class TextArea extends FASTElement {
       'display-shadow',
       this.displayShadow && TextAreaAppearancesForDisplayShadow.includes(this.appearance),
     );
+  }
+
+  /**
+   * @internal
+   */
+  public handleControlInput() {
+    this.setFormValue(this.value);
+  }
+
+  /**
+   * @internal
+   */
+  public handleControlChange() {
+    this.$emit('change');
+    toggleState(this.elementInternals, 'user-invalid', !this.validity.valid);
+    toggleState(this.elementInternals, 'user-valid', this.validity.valid);
+  }
+
+  /**
+   * @internal
+   */
+  public handleControlSelect() {
+    this.$emit('select');
   }
 }

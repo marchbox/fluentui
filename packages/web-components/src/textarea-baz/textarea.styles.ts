@@ -7,7 +7,6 @@ import {
   colorNeutralBackground3,
   colorNeutralBackgroundInverted,
   colorNeutralForeground1,
-  colorNeutralForeground4,
   colorNeutralForegroundDisabled,
   colorNeutralForegroundInverted,
   colorNeutralStroke1,
@@ -49,11 +48,11 @@ import {
   filledDarkerState,
   filledLighterState,
   largeState,
-  placeholderShownState,
   resizeBothState,
   resizeHorizontalState,
   resizeVerticalState,
   smallState,
+  userInvalidState,
 } from '../styles/states/index.js';
 
 /**
@@ -181,11 +180,7 @@ export const styles: ElementStyles = css`
     --box-shadow: ${shadow2};
   }
 
-  :host(${placeholderShownState}) {
-    --placeholder-color: ${colorNeutralForeground4};
-  }
-
-  :host(:invalid) {
+  :host(${userInvalidState}) {
     --border-color: ${colorPaletteRedBorder2};
     --border-block-end-color: ${colorPaletteRedBorder2};
   }

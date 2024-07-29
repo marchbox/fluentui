@@ -11,7 +11,7 @@ export function textInputTemplate<T extends TextArea>(): ElementViewTemplate<T> 
   return html<T>`
     <template>
       <label part="label" for="control" class="label" ${ref('labelEl')}>
-        <slot
+        <slot name="label"
           ${slotted({
             property: 'slottedLabels',
             filter: whitespaceFilter,
@@ -26,13 +26,15 @@ export function textInputTemplate<T extends TextArea>(): ElementViewTemplate<T> 
         ?required="${x => x.required}"
         ?disabled="${x => x.disabled}"
         ?readonly="${x => x.readOnly}"
+        spellcheck="${x => x.spellcheck}"
+        autocomplete="${x => x.autocomplete}"
         dirname="${x => x.dirName}"
         maxlength="${x => x.maxLength}"
         minlength="${x => x.minLength}"
         placeholder="${x => x.placeholder}"
-        @change="${x => x.handleChangeEvent()}"
-        @select="${x => x.handleSelect()}"
-        @input="${x => x.handleInput()}"
+        @change="${x => x.handleControlChange()}"
+        @select="${x => x.handleControlSelect()}"
+        @input="${x => x.handleControlInput()}"
       ></textarea>
     </template>
   `;

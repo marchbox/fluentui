@@ -307,7 +307,13 @@ export const autoResizeState = css.partial`:is([state--auto-resize], :state(auto
 export const displayShadowState = css.partial`:is([state--display-shadow], :state(display-shadow))`;
 
 /**
- * Selector foer the `placeholder-shown` state.
+ * Selector for the `user-invalid` state.
  * @public
  */
-export const placeholderShownState = css.partial`:is([state-placeholder-shown], :state(placeholder-shown))`;
+export const userInvalidState = css.partial`:is([state--user-invalid], :state(user-invalid))`;
+
+/**
+ * Selector for the `user-valid` state.
+ * @public
+ */
+export const userValidState = css.partial`:is([state--user-valid], :state(user-valid))`;

@@ -224,17 +224,36 @@ export const styles: ElementStyles = css`
     content: none;
   }
 
+  .auto-sizer,
+  .control {
+    box-sizing: border-box;
+    font: inherit;
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    padding: 0 var(--control-padding-inline);
+  }
+
+  .auto-sizer {
+    display: none;
+    pointer-events: none;
+    visibility: hidden;
+    white-space: pre-wrap;
+  }
+
+  :host(${autoResizeState}) .auto-sizer {
+    display: block;
+  }
+
   .control {
     appearance: none;
     border: 0;
-    box-sizing: border-box;
     field-sizing: content;
-    grid-column: 1 / -1;
-    grid-row: 1 / -1;
     outline: 0;
-    overflow: auto;
-    padding: 0 var(--control-padding-inline);
     resize: none;
+  }
+
+  :host(${autoResizeState}) .auto-sizer ~ .control {
+    overflow: hidden;
   }
 
   ::selection {

@@ -68,6 +68,11 @@ export class TextArea extends FASTElement {
   public controlEl!: HTMLTextAreaElement;
 
   /**
+   * @internal
+   */
+  public autoSizerEl?: HTMLDivElement;
+
+  /**
    * Indicates the visual appearance of the element.
    *
    * @public
@@ -423,6 +428,7 @@ export class TextArea extends FASTElement {
     this.setDefaultValue();
     this.setValidity();
     this.maybeDisplayShadow();
+    this.maybePrependAutoSizerEl();
 
     Observable.getNotifier(this).subscribe(this, 'appearance');
     Observable.getNotifier(this).subscribe(this, 'displayShadow');
@@ -547,6 +553,17 @@ export class TextArea extends FASTElement {
     this.elementInternals.ariaDisabled = `${disabled}`;
   }
 
+  private maybePrependAutoSizerEl() {
+    if (CSS.supports('field-sizing: content')) {
+      return;
+    }
+
+    this.autoSizerEl = document.createElement('div');
+    this.autoSizerEl.classList.add('auto-sizer');
+    this.autoSizerEl.setAttribute('aria-hidden', 'true');
+    this.shadowRoot!.prepend(this.autoSizerEl);
+  }
+
   private maybeDisplayShadow() {
     toggleState(
       this.elementInternals,
@@ -559,6 +576,10 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public handleControlInput() {
+    if (this.autoResize && this.autoSizerEl) {
+      this.autoSizerEl.textContent = this.value + ' ';
+    }
+
     this.setFormValue(this.value);
   }
 

@@ -74,6 +74,8 @@ export class TextArea extends FASTElement {
 
   private autoSizerObserver?: ResizeObserver;
 
+  private lightDOMObserver!: MutationObserver;
+
   /**
    * Indicates the visual appearance of the element.
    *
@@ -435,6 +437,8 @@ export class TextArea extends FASTElement {
     this.maybeDisplayShadow();
     this.maybeCreateAutoSizerEl();
 
+    this.observeLightDOM();
+
     Observable.getNotifier(this).subscribe(this, 'appearance');
     Observable.getNotifier(this).subscribe(this, 'displayShadow');
     Observable.getNotifier(this).subscribe(this, 'required');
@@ -449,6 +453,7 @@ export class TextArea extends FASTElement {
     super.disconnectedCallback();
 
     this.autoSizerObserver?.disconnect();
+    this.lightDOMObserver?.disconnect();
 
     Observable.getNotifier(this).unsubscribe(this, 'appearance');
     Observable.getNotifier(this).unsubscribe(this, 'displayShadow');
@@ -554,6 +559,15 @@ export class TextArea extends FASTElement {
     this.defaultValue = this.innerHTML.trim();
     this.setFormValue(this.defaultValue);
     this.setValidity();
+  }
+
+  private observeLightDOM() {
+    this.lightDOMObserver = new MutationObserver(() => {
+      this.value = this.innerHTML.trim();
+    });
+    this.lightDOMObserver.observe(this, {
+      childList: true,
+    });
   }
 
   private setDisabledSideEffect(disabled: boolean) {

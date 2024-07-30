@@ -2,11 +2,13 @@ import type { ElementStyles } from '@microsoft/fast-element';
 import { css } from '@microsoft/fast-element';
 import {
   borderRadiusMedium,
+  colorBrandForeground1,
   colorCompoundBrandStroke,
   colorNeutralBackground1,
   colorNeutralBackground3,
   colorNeutralBackgroundInverted,
   colorNeutralForeground1,
+  colorNeutralForeground4,
   colorNeutralForegroundDisabled,
   colorNeutralForegroundInverted,
   colorNeutralStroke1,
@@ -82,7 +84,7 @@ export const styles: ElementStyles = css`
     --background-color: ${colorNeutralBackground1};
     --border-color: ${colorNeutralStroke1};
     --border-block-end-color: ${colorNeutralStrokeAccessible};
-    --placeholder-color: transparent;
+    --placeholder-color: ${colorNeutralForeground4};
 
     /* elevations */
     --box-shadow: none;
@@ -246,6 +248,7 @@ export const styles: ElementStyles = css`
 
   .control {
     appearance: none;
+    background-color: transparent;
     border: 0;
     field-sizing: content;
     outline: 0;
@@ -254,6 +257,10 @@ export const styles: ElementStyles = css`
 
   :host(${autoResizeState}) .auto-sizer ~ .control {
     overflow: hidden;
+  }
+
+  .control::placeholder {
+    color: var(--placeholder-color);
   }
 
   ::selection {

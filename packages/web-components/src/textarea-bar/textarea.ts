@@ -657,7 +657,7 @@ export class TextArea extends FASTElement {
       this.append(document.createElement('br'));
     }
 
-    // For Chromium: 
+    // For Chromium:
     // 1. By adding the `<br>` for WebKit, without any text node, the editable
     //     host becomes uneditable.
     // 2. When the `textContent` is empty, the caret becomes full height of the

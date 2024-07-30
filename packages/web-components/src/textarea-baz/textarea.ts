@@ -10,18 +10,6 @@ import {
   TextAreaSize,
 } from './textarea.options.js';
 
-// TODO: Find a better location to add this style sheet.
-const selectionStyleSheet = new CSSStyleSheet();
-if ('adoptedStyleSheets' in document && !document.adoptedStyleSheets.includes(selectionStyleSheet)) {
-  selectionStyleSheet.replaceSync(`
-    fluent-textarea-foo ::selection {
-      color: ${colorNeutralForegroundInverted};
-      background-color: ${colorNeutralBackgroundInverted};
-    }
-  `);
-  document.adoptedStyleSheets.push(selectionStyleSheet);
-}
-
 /**
  * A Text Area Custom HTML Element.
  * Based largely on the {@link https://developer.mozilla.org/en-US/docs/Web/HTML/Element/textarea | `<textarea>`} element.
@@ -49,17 +37,6 @@ export class TextArea extends FASTElement {
    * @internal
    */
   public elementInternals: ElementInternals = this.attachInternals();
-
-  /**
-   * @internal
-   */
-  public slottedLabels!: NodeList;
-
-  /**
-   * The `<label>` element.
-   * @internal
-   */
-  public labelEl!: HTMLLabelElement;
 
   /**
    * The `<textarea>` element.
@@ -422,8 +399,9 @@ export class TextArea extends FASTElement {
   constructor() {
     super();
 
-    this.elementInternals.role = 'textbox';
-    this.elementInternals.ariaMultiLine = 'true';
+    // TODO: Re-enabled this when Reference Target is out.
+    // this.elementInternals.role = 'textbox';
+    // this.elementInternals.ariaMultiLine = 'true';
   }
 
   /**
@@ -600,7 +578,9 @@ export class TextArea extends FASTElement {
     // removed to let the defined blocked size dictate the component’s block size.
     if (!this.autoSizerObserver) {
       this.autoSizerObserver = new ResizeObserver((_, observer) => {
-        const blockSizePropName = window.getComputedStyle(this).writingMode.startsWith('horizontal') ? 'height' : 'width';
+        const blockSizePropName = window.getComputedStyle(this).writingMode.startsWith('horizontal')
+          ? 'height'
+          : 'width';
         if (this.style.getPropertyValue(blockSizePropName) !== '') {
           this.autoSizerEl?.remove();
           observer.disconnect();

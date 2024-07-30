@@ -10,14 +10,6 @@ import type { TextArea } from './textarea.js';
 export function textInputTemplate<T extends TextArea>(): ElementViewTemplate<T> {
   return html<T>`
     <template>
-      <label part="label" for="control" class="label" ${ref('labelEl')}>
-        <slot name="label"
-          ${slotted({
-            property: 'slottedLabels',
-            filter: whitespaceFilter,
-          })}
-        ></slot>
-      </label>
       <textarea
         ${ref('controlEl')}
         id="control"

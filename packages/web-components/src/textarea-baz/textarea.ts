@@ -114,6 +114,7 @@ export class TextArea extends FASTElement {
   @attr({ attribute: 'auto-resize', mode: 'boolean' })
   public autoResize = false;
   protected autoResizeChanged() {
+    this.maybeCreateAutoSizerEl();
     toggleState(this.elementInternals, `auto-resize`, this.autoResize);
   }
 
@@ -561,9 +562,14 @@ export class TextArea extends FASTElement {
       return;
     }
 
+    if (!this.autoResize && this.autoSizerEl) {
+      this.autoSizerEl.remove();
+      return;
+    }
+
     this.autoSizerEl = document.createElement('div');
     this.autoSizerEl.classList.add('auto-sizer');
-    this.autoSizerEl.setAttribute('aria-hidden', 'true');
+    this.autoSizerEl.ariaHidden = 'true';
     this.shadowRoot!.prepend(this.autoSizerEl);
   }
 

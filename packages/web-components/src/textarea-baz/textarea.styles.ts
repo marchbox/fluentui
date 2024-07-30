@@ -237,6 +237,7 @@ export const styles: ElementStyles = css`
 
   .auto-sizer {
     display: none;
+    padding-block-end: 2px; /* avoid scroll bar in Firefox */
     pointer-events: none;
     visibility: hidden;
     white-space: pre-wrap;
@@ -251,12 +252,9 @@ export const styles: ElementStyles = css`
     background-color: transparent;
     border: 0;
     field-sizing: content;
+    max-block-size: 100%;
     outline: 0;
     resize: none;
-  }
-
-  :host(${autoResizeState}) .auto-sizer ~ .control {
-    overflow: hidden;
   }
 
   .control::placeholder {

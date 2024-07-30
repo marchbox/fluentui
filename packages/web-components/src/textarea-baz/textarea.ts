@@ -428,7 +428,7 @@ export class TextArea extends FASTElement {
     this.setDefaultValue();
     this.setValidity();
     this.maybeDisplayShadow();
-    this.maybePrependAutoSizerEl();
+    this.maybeCreateAutoSizerEl();
 
     Observable.getNotifier(this).subscribe(this, 'appearance');
     Observable.getNotifier(this).subscribe(this, 'displayShadow');
@@ -554,7 +554,9 @@ export class TextArea extends FASTElement {
   }
 
   // Technique inspired by https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/
-  private maybePrependAutoSizerEl() {
+  // TODO: This should be removed after `field-sizing: content` is widely supported
+  // https://caniuse.com/mdn-css_properties_field-sizing_content
+  private maybeCreateAutoSizerEl() {
     if (CSS.supports('field-sizing: content')) {
       return;
     }

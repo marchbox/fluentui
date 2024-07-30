@@ -553,6 +553,7 @@ export class TextArea extends FASTElement {
     this.elementInternals.ariaDisabled = `${disabled}`;
   }
 
+  // Technique inspired by https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/
   private maybePrependAutoSizerEl() {
     if (CSS.supports('field-sizing: content')) {
       return;

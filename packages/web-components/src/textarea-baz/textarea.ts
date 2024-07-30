@@ -72,6 +72,8 @@ export class TextArea extends FASTElement {
    */
   public autoSizerEl?: HTMLDivElement;
 
+  private autoSizerObserver?: ResizeObserver;
+
   /**
    * Indicates the visual appearance of the element.
    *
@@ -106,6 +108,8 @@ export class TextArea extends FASTElement {
 
   /**
    * Indicates whether the element’s block size (height) should be automatically changed based on the content.
+   * Note: When this property’s value is set to be `true`, the element should not have a fixed block-size
+   * defined in CSS. Instead, use `min-height` or `min-block-size`.
    *
    * @public
    * @remarks
@@ -444,6 +448,8 @@ export class TextArea extends FASTElement {
   public disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    this.autoSizerObserver?.disconnect();
+
     Observable.getNotifier(this).unsubscribe(this, 'appearance');
     Observable.getNotifier(this).unsubscribe(this, 'displayShadow');
     Observable.getNotifier(this).unsubscribe(this, 'required');
@@ -562,15 +568,32 @@ export class TextArea extends FASTElement {
       return;
     }
 
-    if (!this.autoResize && this.autoSizerEl) {
-      this.autoSizerEl.remove();
+    if (!this.autoResize) {
+      this.autoSizerEl?.remove();
+      this.autoSizerObserver?.disconnect();
       return;
     }
 
-    this.autoSizerEl = document.createElement('div');
-    this.autoSizerEl.classList.add('auto-sizer');
-    this.autoSizerEl.ariaHidden = 'true';
+    if (!this.autoSizerEl) {
+      this.autoSizerEl = document.createElement('div');
+      this.autoSizerEl.classList.add('auto-sizer');
+      this.autoSizerEl.ariaHidden = 'true';
+    }
     this.shadowRoot!.prepend(this.autoSizerEl);
+
+    // The `ResizeObserver` is used to observe when the component gains
+    // explicit block size, when so, the `autoSizerEl` element should be
+    // removed to let the defined blocked size dictate the component’s block size.
+    if (!this.autoSizerObserver) {
+      this.autoSizerObserver = new ResizeObserver((_, observer) => {
+        const blockSizePropName = window.getComputedStyle(this).writingMode.startsWith('horizontal') ? 'height' : 'width';
+        if (this.style.getPropertyValue(blockSizePropName) !== '') {
+          this.autoSizerEl?.remove();
+          observer.disconnect();
+        }
+      });
+    }
+    this.autoSizerObserver.observe(this);
   }
 
   private maybeDisplayShadow() {
